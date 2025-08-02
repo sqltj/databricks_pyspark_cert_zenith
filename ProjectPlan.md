@@ -29,8 +29,8 @@ This can be done by running the `utils/Setup Environment.ipynb` notebook (recomm
    - In the `00_landing` schema, create two volumes:
      - `batch`
      - `streaming`
-   - The setup script will automatically create the necessary subdirectories inside these volumes. The final paths for the data generator will be:
-     ```
+   - Create "customers" and "products" directories under the "batch" volume, and "user_events" directory under the streaming volume.
+   - ```
      /Volumes/zenith_online/00_landing/batch/customers
      /Volumes/zenith_online/00_landing/batch/products
      /Volumes/zenith_online/00_landing/streaming/user_events

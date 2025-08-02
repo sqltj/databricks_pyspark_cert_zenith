@@ -1,6 +1,6 @@
 ### **Project Title: E-commerce User Behavior Analytics Pipeline**
 
-This project is a comprehensive, hands-on lab designed to prepare you for the **Databricks Certified Associate Developer for Apache Spark** certification exam. Instead of studying abstract concepts, you will build a realistic, end-to-end data pipeline that solves a real-world business problem, applying dozens of the specific skills tested on the exam.
+This project is a comprehensive, hands-on lab designed to prepare you for the **[Databricks Certified Associate Developer for Apache Spark](https://www.databricks.com/learn/certification/apache-spark-developer-associate)** certification exam. Instead of studying abstract concepts, you will build a realistic, end-to-end data pipeline that solves a real-world business problem, applying dozens of the specific skills tested on the exam.
 
 ---
 
