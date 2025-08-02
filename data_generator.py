@@ -163,7 +163,7 @@ def generate_batch_data():
     print("-" * 50)
 
 
-def generate_streaming_events(infinite=None):
+def generate_streaming_events(infinite=None, stream_events_per_batch=None, stream_batch_interval_s=None):
     """
     Generates a continuous stream of user event data in JSON format.
     If infinite is True, runs in a loop until the script is manually stopped.
@@ -172,6 +172,11 @@ def generate_streaming_events(infinite=None):
     """
     if infinite is None:
         infinite = CONFIG.get("STREAM_INFINITE", True)
+    
+    if stream_events_per_batch is None:
+        stream_events_per_batch = CONFIG.get("STREAM_EVENTS_PER_BATCH", 5000)
+    if stream_batch_interval_s is None:
+        stream_batch_interval_s = CONFIG.get("STREAM_BATCH_INTERVAL_S", 30)
 
     streaming_path = CONFIG["RAW_STREAMING_PATH"]
     os.makedirs(streaming_path, exist_ok=True)
@@ -185,7 +190,7 @@ def generate_streaming_events(infinite=None):
     def write_event_batch():
         events = []
         now = datetime.now(timezone.utc)
-        for _ in range(CONFIG["STREAM_EVENTS_PER_BATCH"]):
+        for _ in range(stream_events_per_batch):
             event_type = random.choices(['view_product', 'add_to_cart', 'purchase'], weights=[0.7, 0.2, 0.1], k=1)[0]
             if event_type == 'view_product' and random.random() < CONFIG['SKEW_FACTOR_PROBABILITY']:
                 product_id = random.choice(CONFIG['POPULAR_PRODUCT_IDS'])
@@ -209,7 +214,7 @@ def generate_streaming_events(infinite=None):
     if infinite:
         while True:
             write_event_batch()
-            time.sleep(CONFIG["STREAM_BATCH_INTERVAL_S"])
+            time.sleep(stream_batch_interval_s)
     else:
         write_event_batch()
 
