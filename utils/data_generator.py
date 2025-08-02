@@ -58,6 +58,8 @@ import time
 import uuid
 from datetime import datetime, timezone, timedelta
 
+from variables import *
+
 # Try to import pandas and pyarrow, which are needed for Parquet export.
 # These are pre-installed in Databricks runtimes.
 try:
@@ -69,14 +71,11 @@ except ImportError:
     PANDAS_AVAILABLE = False
 
 # --- Configuration ---
-# Use Volumes for storage in Databricks free edition
-BASE_PATH = "/Volumes/zenith_online/00_landing"
-
 CONFIG = {
     # File Paths
-    "RAW_STREAMING_PATH": f"{BASE_PATH}/streaming/user_events",
-    "RAW_BATCH_CUSTOMERS_PATH": f"{BASE_PATH}/batch/customers",
-    "RAW_BATCH_PRODUCTS_PATH": f"{BASE_PATH}/batch/products",
+    "RAW_STREAMING_PATH": RAW_STREAMING_PATH,
+    "RAW_BATCH_CUSTOMERS_PATH": RAW_BATCH_CUSTOMERS_PATH,
+    "RAW_BATCH_PRODUCTS_PATH": RAW_BATCH_PRODUCTS_PATH,
 
     # Data Generation Counts
     "CUSTOMER_COUNT": 1000,
@@ -92,7 +91,7 @@ CONFIG = {
     "SKEW_FACTOR_PROBABILITY": 0.75, # 75% of 'view_product' events will be for a popular product.
 
     # Streaming Mode: If True, stream is infinite; if False, only one batch is generated.
-    "STREAM_INFINITE": False
+    "STREAM_INFINITE": True
 }
 
 # --- Pre-generated lists for creating realistic data ---
