@@ -1,8 +1,12 @@
 # Project Plan: Zenith Online Analytics Pipeline
 
-## Databricks Configuration Requirements
+## I. Clone the repository to Databricks
 
-To run this project end-to-end, complete the following setup steps in your Databricks workspace. This can be done by running the `utils/Setup Environment.ipynb` notebook or manually:
+## II. Databricks Configuration Requirements
+
+To run this project end-to-end, complete the following setup steps in your Databricks workspace.
+
+This can be done by running the `utils/Setup Environment.ipynb` notebook (recommended) or manually:
 
 1. **Create a Catalog**
 
@@ -38,7 +42,12 @@ To run this project end-to-end, complete the following setup steps in your Datab
      - `checkpoints`
      - `schemas`
 
-## ETL Pipeline Reconstruction Checklist
+## III. Run the syntetic data generator
+
+1. Go to "utils"
+2. Run the data_generator.py script in databricks (it relies on the variables.py file for using )
+
+## IV. ETL Pipeline Construction Checklist
 
 This checklist details every transformation, data quality check, and business aggregation required to build the final `ELT.py` pipeline.
 
