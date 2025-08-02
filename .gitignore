@@ -1,2 +1,3 @@
 .DS_Store
-ai_studio/
+llm/
+__pycache__/
