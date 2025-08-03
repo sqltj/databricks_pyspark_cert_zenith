@@ -1,5 +1,27 @@
 # Project Plan: Zenith Online Analytics Pipeline
 
+## ⚠️ Consistency Note: Use `variables.py` for Paths and Names
+
+To ensure consistency across all scripts and notebooks (including the data generator, ETL pipeline, and analytics queries), **import and use the variables defined in `variables.py`**. This file contains all catalog, schema, and volume names, as well as key data paths, as Python variables.
+**Do not hardcode catalog, schema, or path names**—always reference the variables, for example:
+
+```python
+from variables import (
+    CATALOG_NAME,
+    LANDING_SCHEMA,
+    BRONZE_SCHEMA,
+    RAW_STREAMING_PATH,
+    RAW_BATCH_CUSTOMERS_PATH,
+    RAW_BATCH_PRODUCTS_PATH,
+    CHECKPOINT_BASE_PATH,
+    SCHEMA_BASE_PATH,
+)
+```
+
+This approach ensures that any changes to naming conventions or paths only need to be made in one place (`variables.py`), and all components of the pipeline will remain in sync.
+
+---
+
 ## I. Clone the repository to Databricks
 
 ## II. Databricks Configuration Requirements
@@ -7,6 +29,10 @@
 To run this project end-to-end, complete the following setup steps in your Databricks workspace.
 
 This can be done by running the `utils/Setup Environment.ipynb` notebook (recommended) or manually:
+
+> **Tip:** When creating catalogs, schemas, and volumes manually, refer to the variable names in `variables.py` for consistency.
+
+> For example, use `CATALOG_NAME`, `LANDING_SCHEMA`, `SYSTEM_SCHEMA`, etc., to match the naming in your scripts and notebooks.
 
 1. **Create a Catalog**
 
@@ -45,7 +71,14 @@ This can be done by running the `utils/Setup Environment.ipynb` notebook (recomm
 ## III. Run the syntetic data generator
 
 1. Go to "utils"
-2. Run the data_generator.py script in databricks (it relies on the variables.py file for using )
+2. Run the data_generator.py script in databricks (it relies on the variables.py file for using paths and schema names)
+3. **Important:** The data generator uses the following variables for output paths:
+
+   1. `RAW_STREAMING_PATH`
+   2. `RAW_BATCH_CUSTOMERS_PATH`
+   3. `RAW_BATCH_PRODUCTS_PATH`
+
+   Make sure any scripts or notebooks that read this data also use these variables from `variables.py`.
 
 ## IV. ETL Pipeline Construction Checklist
 
@@ -61,26 +94,26 @@ This checklist details every transformation, data quality check, and business ag
   2. **`bronze_customer_profiles` (from CSV)**
   3. **`bronze_product_details` (from Parquet)**
 
-- **Target Schema:** `01_bronze`
+- **Target Schema:** `01_bronze (use `BRONZE_SCHEMA `from`variables.py `)`
 - **Task 1: Create `bronze_user_events` Streaming Table**
 
-  - [ ] Use Auto Loader (`cloudFiles`) to read the streaming JSON files from the `/Volumes/zenith_online/00_landing/streaming/user_events` path.
+  - [ ] Use Auto Loader (`cloudFiles`) to read the streaming JSON files from the `/Volumes/zenith_online/00_landing/streaming/user_events` path (use `RAW_STREAMING_PATH` from `variables.py`.)
   - [ ] Define and enforce an explicit schema for the incoming JSON data to prevent schema inference issues. The schema should include `event_id`, `event_timestamp`, `user_id`, `event_type`, `product_id`, and `session_id`.
   - [ ] Add an `ingestion_timestamp` column to record when the data was processed.
   - [ ] Convert the string-based `event_timestamp` into a proper timestamp column named `event_dt`.
-  - [ ] Write the resulting stream to a Delta table named `bronze_user_events` using the `availableNow` trigger to process all available data in a single batch.
-  - [ ] Configure a checkpoint location for this stream within the `_system` volume.
+  - [ ] Write the resulting stream to a Delta table named `bronze_user_events` using the `availableNow` trigger to process all available data in a single batch (use `BRONZE_SCHEMA` variable from variables.py)
+  - [ ] Configure a checkpoint location for this stream within the `_system` volume ()
 
 - **Task 2: Create `bronze_customer_profiles` Batch Table**
 
-  - [ ] Read the batch CSV file from the `/Volumes/zenith_online/00_landing/batch/customers` path.
+  - [ ] Read the batch CSV file from the `/Volumes/zenith_online/00_landing/batch/customers` path (use `RAW_BATCH_CUSTOMERS_PATH` from variables)
   - [ ] Ensure the read operation uses the headers from the CSV file.
   - [ ] Define and apply a schema to ensure `customer_id` is an integer and other columns are strings.
   - [ ] Overwrite the data into a Delta table named `bronze_customer_profiles`.
 
 - **Task 3: Create `bronze_product_details` Batch Table**
 
-  - [ ] Read the batch Parquet file from the `/Volumes/zenith_online/00_landing/batch/products` path.
+  - [ ] Read the batch Parquet file from the `/Volumes/zenith_online/00_landing/batch/products` path (use `RAW_BATCH_PRODUCTS_PATH` from variables)
   - [ ] Overwrite the data into a Delta table named `bronze_product_details`.
 
 ---
@@ -90,7 +123,7 @@ This checklist details every transformation, data quality check, and business ag
 - **Goal:** Combine raw data sources, clean the data, remove duplicates, and create an enriched, queryable table for deeper analysis.
 - **Input:** Bronze layer tables.
 - **Output:** A central, enriched table: `silver_sessionized_activity`.
-- **Target Schema:** `02_silver`
+- **Target Schema:** `02_silver` (use `SILVER_SCHEMA` from `variables.py`)
 - **Task 4: Create a Pandas UDF for Region Categorization**
 
   - [ ] Develop a Pandas UDF named `categorize_region`.
@@ -114,7 +147,7 @@ This checklist details every transformation, data quality check, and business ag
     - Create a new `event_date` column by casting the `event_dt` timestamp to a date.
   - [ ] **Select and Finalize Schema:** Select a final set of columns in a logical order to form the silver table schema.
   - [ ] Write the enriched stream to a Delta table named `silver_sessionized_activity` using the `availableNow` trigger.
-  - [ ] Configure a checkpoint location for this silver stream.
+  - [ ] Configure a checkpoint location for this silver stream (use `CHECKPOINT_BASE_PATH` from `variables.py`.)
 
 ---
 
