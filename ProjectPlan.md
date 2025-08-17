@@ -114,8 +114,8 @@ This checklist details every transformation, data quality check, and business ag
 
 - **Task 2: Create `bronze_customer_profiles` Batch Table**
 
-  - _Why:_ Converts a periodically refreshed dimension snapshot (customers) into a managed Delta table so it can be efficiently joined with streaming facts. Enforcing a schema up front prevents accidental type widening (e.g., inferring customer*id as string) that would later break joins.
-    -\_End Goal:* A clean, type-consistent customer dimension (`bronze_customer_profiles`) ready for enrichment joins that preserves referential integrity with events.
+  - _Why:_ Converts a periodically refreshed dimension snapshot (customers) into a managed Delta table so it can be efficiently joined with streaming facts. Enforcing a schema up front prevents accidental type widening (e.g., inferring customer_id as string) that would later break joins.
+  - _End Goal:_ A clean, type-consistent customer dimension (`bronze_customer_profiles`) ready for enrichment joins that preserves referential integrity with events.
 
   - [ ] Define and apply a schema to ensure `customer_id` is an integer and other columns are strings.
   - [ ] Read the batch CSV file from the `/Volumes/zenith_online/00_landing/batch/customers` path (use `RAW_BATCH_CUSTOMERS_PATH` from variables)
@@ -126,8 +126,8 @@ This checklist details every transformation, data quality check, and business ag
 
 - **Task 3: Create `bronze_product_details` Batch Table**
 
-  - _Why:_ Provides a governed product dimension (names, categories, prices) required to translate low-level product*id references in events into analytics-friendly attributes and monetary values.
-    -\_End Goal:* A Delta product dimension (`bronze_product_details`) enabling category / revenue calculations and later skew-mitigated aggregations.
+  - _Why:_ Provides a governed product dimension (names, categories, prices) required to translate low-level product\*id references in events into analytics-friendly attributes and monetary values.
+  - _End Goal:_ A Delta product dimension (`bronze_product_details`) enabling category / revenue calculations and later skew-mitigated aggregations.
 
   - [ ] Read the batch Parquet file from the `/Volumes/zenith_online/00_landing/batch/products` path (use `RAW_BATCH_PRODUCTS_PATH` from variables)
   - [ ] Overwrite the data into a Delta table named `bronze_product_details`.
@@ -193,8 +193,8 @@ This checklist details every transformation, data quality check, and business ag
 
 - **Task 6: Create `gold_daily_product_performance` Aggregate Table**
 
-  - - _Why:_ Produces daily product performance metrics (views, funnel progression, revenue) optimized for BI dashboards and trend analyses. Salting mitigates impact of skewed hot products, ensuring stable performance and accurate ranking calculations.
-      -- _End Goal:_ A partitioned, query-ready Delta table (`gold_daily_product_performance`) enabling rapid insights into product engagement and monetization by day and category with embedded revenue ranking.
+  - _Why:_ Produces daily product performance metrics (views, funnel progression, revenue) optimized for BI dashboards and trend analyses. Salting mitigates impact of skewed hot products, ensuring stable performance and accurate ranking calculations.
+  - _End Goal:_ A partitioned, query-ready Delta table (`gold_daily_product_performance`) enabling rapid insights into product engagement and monetization by day and category with embedded revenue ranking.
 
   - [ ] Read the `silver_sessionized_activity` table as a batch DataFrame.
   - [ ] **Handle Data Skew:**
