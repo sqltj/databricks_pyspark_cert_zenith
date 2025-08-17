@@ -95,23 +95,36 @@ This checklist details every transformation, data quality check, and business ag
   3. **`bronze_product_details` (from Parquet)**
 
 - **Target Schema:** `01_bronze (use `BRONZE_SCHEMA `from`variables.py `)`
-- **Task 1: Create `bronze_user_events` Streaming Table**
 
-  - [ ] Use Auto Loader (`cloudFiles`) to read the streaming JSON files from the `/Volumes/zenith_online/00_landing/streaming/user_events` path (use `RAW_STREAMING_PATH` from `variables.py`.)
+---
+
+- **Task 1: Create `bronze_user_events` Streaming Table**
+  _Why:_ Establishes a governed, append-only raw fact table capturing every user interaction with minimal transformation so downstream layers can always trace back to the original event. Using Auto Loader plus an explicit schema guarantees schema drift control and reliable incremental ingestion even as new files arrive.
+  _End Goal:_ A durable Delta table (`bronze_user_events`) in the Bronze schema that faithfully mirrors the raw JSON feed with added timestamps for lineage, enabling reproducible enrichment and time-aware processing in Silver.
+
   - [ ] Define and enforce an explicit schema for the incoming JSON data to prevent schema inference issues. The schema should include `event_id`, `event_timestamp`, `user_id`, `event_type`, `product_id`, and `session_id`.
+  - [ ] Use Auto Loader (`cloudFiles`) to read the streaming JSON files from the `/Volumes/zenith_online/00_landing/streaming/user_events` path (use `RAW_STREAMING_PATH` from `variables.py`.)
   - [ ] Add an `ingestion_timestamp` column to record when the data was processed.
   - [ ] Convert the string-based `event_timestamp` into a proper timestamp column named `event_dt`.
-  - [ ] Write the resulting stream to a Delta table named `bronze_user_events` using the `availableNow` trigger to process all available data in a single batch (use `BRONZE_SCHEMA` variable from variables.py)
   - [ ] Configure a checkpoint location for this stream within the `_system` volume ()
+  - [ ] Write the resulting stream to a Delta table named `bronze_user_events` using the `availableNow` trigger to process all available data in a single batch (use `BRONZE_SCHEMA` variable from variables.py)
+
+---
 
 - **Task 2: Create `bronze_customer_profiles` Batch Table**
+  _Why:_ Converts a periodically refreshed dimension snapshot (customers) into a managed Delta table so it can be efficiently joined with streaming facts. Enforcing a schema up front prevents accidental type widening (e.g., inferring customer*id as string) that would later break joins.
+  \_End Goal:* A clean, type-consistent customer dimension (`bronze_customer_profiles`) ready for enrichment joins that preserves referential integrity with events.
 
+  - [ ] Define and apply a schema to ensure `customer_id` is an integer and other columns are strings.
   - [ ] Read the batch CSV file from the `/Volumes/zenith_online/00_landing/batch/customers` path (use `RAW_BATCH_CUSTOMERS_PATH` from variables)
   - [ ] Ensure the read operation uses the headers from the CSV file.
-  - [ ] Define and apply a schema to ensure `customer_id` is an integer and other columns are strings.
   - [ ] Overwrite the data into a Delta table named `bronze_customer_profiles`.
 
+---
+
 - **Task 3: Create `bronze_product_details` Batch Table**
+  _Why:_ Provides a governed product dimension (names, categories, prices) required to translate low-level product*id references in events into analytics-friendly attributes and monetary values.
+  \_End Goal:* A Delta product dimension (`bronze_product_details`) enabling category / revenue calculations and later skew-mitigated aggregations.
 
   - [ ] Read the batch Parquet file from the `/Volumes/zenith_online/00_landing/batch/products` path (use `RAW_BATCH_PRODUCTS_PATH` from variables)
   - [ ] Overwrite the data into a Delta table named `bronze_product_details`.
@@ -124,13 +137,23 @@ This checklist details every transformation, data quality check, and business ag
 - **Input:** Bronze layer tables.
 - **Output:** A central, enriched table: `silver_sessionized_activity`.
 - **Target Schema:** `02_silver` (use `SILVER_SCHEMA` from `variables.py`)
+
+---
+
 - **Task 4: Create a Pandas UDF for Region Categorization**
+  _Why:_ Normalizes granular location strings into a smaller, business-recognized region taxonomy to simplify segmentation, reduce cardinality in aggregations, and accelerate downstream queries.
+  _End Goal:_ A reusable function (`categorize_region`) producing a standardized region column used for customer and revenue rollups in Silver and Gold tables.
 
   - [ ] Develop a Pandas UDF named `categorize_region`.
   - [ ] The UDF must accept a pandas Series of customer locations (strings).
-  - [ ] It should return a pandas Series with a corresponding region ('East Coast', 'West Coast', or 'Central') based on the input location.
+  - [ ] It should return a pandas Series with a corresponding region ('East Coast', 'West Coast', or 'Central') based on the input location. (Note - the data generator provides only the following regions - ['New York', 'Philadelphia'] (both east coast) and ['Los Angeles', 'San Diego'] (both west coast)
+        )
+
+---
 
 - **Task 5: Create `silver_sessionized_activity` Streaming Table**
+  _Why:_ Transforms noisy raw events into a de-duplicated, enriched activity fact set combining product, customer, temporal, and derived region context—shaping data into a form suited for consistent business aggregation without re-implementing joins each time.
+  _End Goal:_ A single conformed Silver table (`silver_sessionized_activity`) that is the authoritative behavioral dataset powering all Gold-layer KPIs.
 
   - [ ] Read the `bronze_user_events` table as a stream.
   - [ ] Read the `bronze_customer_profiles` and `bronze_product_details` tables as static DataFrames for enrichment.
@@ -161,7 +184,11 @@ This checklist details every transformation, data quality check, and business ag
   - `gold_daily_product_performance`
   - `gold_customer_purchase_summary`
 
+---
+
 - **Task 6: Create `gold_daily_product_performance` Aggregate Table**
+  _Why:_ Produces daily product performance metrics (views, funnel progression, revenue) optimized for BI dashboards and trend analyses. Salting mitigates impact of skewed hot products, ensuring stable performance and accurate ranking calculations.
+  _End Goal:_ A partitioned, query-ready Delta table (`gold_daily_product_performance`) enabling rapid insights into product engagement and monetization by day and category with embedded revenue ranking.
 
   - [ ] Read the `silver_sessionized_activity` table as a batch DataFrame.
   - [ ] **Handle Data Skew:**
@@ -175,7 +202,11 @@ This checklist details every transformation, data quality check, and business ag
     - Overwrite the final DataFrame into a Delta table named `gold_daily_product_performance`.
     - Partition the table by `event_date` to optimize queries that filter by date.
 
+---
+
 - **Task 7: Create `customer_purchase_summary` Aggregate Table**
+  _Why:_ Consolidates purchase behavior per customer to support LTV-style analysis, top customer identification, and targeted marketing segmentation. The null region count surfaces data completeness issues early.
+  _End Goal:_ A Gold table (`customer_purchase_summary`) listing monetization KPIs per customer, sorted for immediate consumption by business stakeholders.
 
   - [ ] Read the `silver_sessionized_activity` table as a batch DataFrame.
   - [ ] **Perform Data Quality Check:** Calculate and print the count of events where the customer `region` is `NULL`.
@@ -192,14 +223,27 @@ This checklist details every transformation, data quality check, and business ag
 ### ✅ Analytics: Answering Business Questions
 
 - **Goal:** Use Spark SQL to query the Gold tables and provide answers to business stakeholders.
+
+---
+
 - **Task 8: Query Top 5 Products**
+  _Why:_ Identifies current best-selling products, informing inventory prioritization and promotional decisions.
+  _End Goal:_ A reproducible query pattern that stakeholders can adapt for daily merchandising reports.
 
   - [ ] Write a SQL query against the `gold_daily_product_performance` table to find the top 5 products with the highest number of purchases on the most recent day.
 
+---
+
 - **Task 9: Query Daily Revenue by Category**
+  _Why:_ Tracks category-level revenue trends to spot growth, seasonality, or emerging declines, guiding assortment strategy.
+  _End Goal:_ A concise revenue-by-category time series supporting dashboards and forecasting inputs.
 
   - [ ] Write a SQL query against the `gold_daily_product_performance` table to calculate the total daily revenue for each product category.
 
+---
+
 - **Task 10: Query Top 10 Customers**
+  _Why:_ Surfaces high-value customers for retention campaigns, VIP programs, and churn risk monitoring.
+  _End Goal:_ A ranked customer list enabling marketing and customer success teams to act on highest ROI opportunities.
 
   - [ ] Write a SQL query against the `customer_purchase_summary` table to identify the top 10 customers by total purchase value.
