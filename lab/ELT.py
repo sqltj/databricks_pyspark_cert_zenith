@@ -13,10 +13,10 @@
 
 # COMMAND ----------
 
-%load_ext autoreload
-%autoreload 2
-# Enables autoreload; learn more at https://docs.databricks.com/en/files/workspace-modules.html#autoreload-for-python-modules
-# To disable autoreload; run %autoreload 0
+# MAGIC %load_ext autoreload
+# MAGIC %autoreload 2
+# MAGIC # Enables autoreload; learn more at https://docs.databricks.com/en/files/workspace-modules.html#autoreload-for-python-modules
+# MAGIC # To disable autoreload; run %autoreload 0
 
 # COMMAND ----------
 
@@ -48,7 +48,7 @@ GOLD_CUSTOMER_SUMMARY_TABLE = f"{CATALOG_NAME}.{GOLD_SCHEMA}.customer_purchase_s
 
 # COMMAND ----------
 
-%run "../utils/Setup Environment"
+# MAGIC %run "./environment_setup"
 
 # COMMAND ----------
 
@@ -57,8 +57,10 @@ GOLD_CUSTOMER_SUMMARY_TABLE = f"{CATALOG_NAME}.{GOLD_SCHEMA}.customer_purchase_s
 
 # COMMAND ----------
 
-from utils.data_generator import generate_batch_data, generate_streaming_events
+from data_generator import generate_batch_data, generate_streaming_events
 generate_batch_data()
+
+# COMMAND ----------
 
 generate_streaming_events(infinite=False, stream_events_per_batch=50000)
 # Infinite streaming is disabled by infinite=False, which means it will just generate one batch of data and stop.
@@ -132,38 +134,38 @@ generate_streaming_events(infinite=False, stream_events_per_batch=50000)
 
 # COMMAND ----------
 
-# print("Starting Bronze Layer: Streaming Events Ingestion")
+print("Starting Bronze Layer: Streaming Events Ingestion")
 
-# event_schema = StructType([
-#     StructField("event_id", StringType(), True),
-#     StructField("event_timestamp", StringType(), True),
-#     StructField("user_id", IntegerType(), True),
-#     StructField("event_type", StringType(), True),
-#     StructField("product_id", IntegerType(), True),
-#     StructField("session_id", StringType(), True)
-# ])
+event_schema = StructType([
+    StructField("event_id", StringType(), True),
+    StructField("event_timestamp", StringType(), True),
+    StructField("user_id", IntegerType(), True),
+    StructField("event_type", StringType(), True),
+    StructField("product_id", IntegerType(), True),
+    StructField("session_id", StringType(), True)
+])
 
-# bronze_events_df = (
-#     spark.readStream
-#     .format("cloudFiles")
-#     .option("cloudFiles.format", "json")
-#     .option("cloudFiles.schemaLocation", f"{SCHEMA_BASE_PATH}/bronze_events")
-#     .schema(event_schema)
-#     .load(RAW_STREAMING_PATH)
-#     .withColumn("ingestion_timestamp", F.current_timestamp())
-#     .withColumn("event_dt", F.to_timestamp("event_timestamp"))
-# )
+bronze_events_df = (
+    spark.readStream
+    .format("cloudFiles")
+    .option("cloudFiles.format", "json")
+    .option("cloudFiles.schemaLocation", f"{SCHEMA_BASE_PATH}/bronze_events")
+    .schema(event_schema)
+    .load(RAW_STREAMING_PATH)
+    .withColumn("ingestion_timestamp", F.current_timestamp())
+    .withColumn("event_dt", F.to_timestamp("event_timestamp"))
+)
 
-# (
-#     bronze_events_df.writeStream
-#     .format("delta")
-#     .outputMode("append")
-#     .option("checkpointLocation", f"{CHECKPOINT_BASE_PATH}/bronze_events")
-#     .trigger(availableNow=True)
-#     .toTable(BRONZE_EVENTS_TABLE)
-# )
+(
+    bronze_events_df.writeStream
+    .format("delta")
+    .outputMode("append")
+    .option("checkpointLocation", f"{CHECKPOINT_BASE_PATH}/bronze_events")
+    .trigger(availableNow=True)
+    .toTable(BRONZE_EVENTS_TABLE)
+)
 
-# print(f"Bronze Layer: Streaming events processing complete. Table `{BRONZE_EVENTS_TABLE}` is updated.")
+print(f"Bronze Layer: Streaming events processing complete. Table `{BRONZE_EVENTS_TABLE}` is updated.")
 
 # COMMAND ----------
 
@@ -205,16 +207,16 @@ generate_streaming_events(infinite=False, stream_events_per_batch=50000)
 
 # COMMAND ----------
 
-# print("Starting Bronze Layer: Batch Ingestion")
+print("Starting Bronze Layer: Batch Ingestion")
 
-# customer_schema = StructType([
-#     StructField("customer_id", IntegerType(), False),
-#     StructField("signup_date", StringType(), True),
-#     StructField("location", StringType(), True)
-# ])
-# customers_df = spark.read.format("csv").schema(customer_schema).option("header", "true").load(RAW_BATCH_CUSTOMERS_PATH)
-# customers_df.write.format("delta").mode("overwrite").saveAsTable(BRONZE_CUSTOMERS_TABLE)
-# print(f"Bronze Layer: Wrote customer profiles to `{BRONZE_CUSTOMERS_TABLE}`.")
+customer_schema = StructType([
+    StructField("customer_id", IntegerType(), False),
+    StructField("signup_date", StringType(), True),
+    StructField("location", StringType(), True)
+])
+customers_df = spark.read.format("csv").schema(customer_schema).option("header", "true").load(RAW_BATCH_CUSTOMERS_PATH)
+customers_df.write.format("delta").mode("overwrite").saveAsTable(BRONZE_CUSTOMERS_TABLE)
+print(f"Bronze Layer: Wrote customer profiles to `{BRONZE_CUSTOMERS_TABLE}`.")
 
 # COMMAND ----------
 
@@ -243,9 +245,9 @@ generate_streaming_events(infinite=False, stream_events_per_batch=50000)
 
 # COMMAND ----------
 
-# products_df = spark.read.format("parquet").load(RAW_BATCH_PRODUCTS_PATH)
-# products_df.write.format("delta").mode("overwrite").saveAsTable(BRONZE_PRODUCTS_TABLE)
-# print(f"Bronze Layer: Wrote product details to `{BRONZE_PRODUCTS_TABLE}`.")
+products_df = spark.read.format("parquet").load(RAW_BATCH_PRODUCTS_PATH)
+products_df.write.format("delta").mode("overwrite").saveAsTable(BRONZE_PRODUCTS_TABLE)
+print(f"Bronze Layer: Wrote product details to `{BRONZE_PRODUCTS_TABLE}`.")
 
 # COMMAND ----------
 
@@ -301,17 +303,17 @@ generate_streaming_events(infinite=False, stream_events_per_batch=50000)
 
 # COMMAND ----------
 
-# @F.pandas_udf(StringType())
-# def categorize_region(locations: pd.Series) -> pd.Series:
-#     east_coast = ['New York', 'Philadelphia']
-#     west_coast = ['Los Angeles', 'San Diego']
-#     def get_region(location):
-#         if location in east_coast: return 'East Coast'
-#         elif location in west_coast: return 'West Coast'
-#         else: return 'Central'
-#     return locations.apply(get_region)
+@F.pandas_udf(StringType())
+def categorize_region(locations: pd.Series) -> pd.Series:
+    east_coast = ['New York', 'Philadelphia']
+    west_coast = ['Los Angeles', 'San Diego']
+    def get_region(location):
+        if location in east_coast: return 'East Coast'
+        elif location in west_coast: return 'West Coast'
+        else: return 'Central'
+    return locations.apply(get_region)
 
-# print("Silver Layer: Pandas UDF `categorize_region` created.")
+print("Silver Layer: Pandas UDF `categorize_region` created.")
 
 # COMMAND ----------
 
@@ -369,50 +371,50 @@ generate_streaming_events(infinite=False, stream_events_per_batch=50000)
 
 # COMMAND ----------
 
-# print("Starting Silver Layer: Enriching and Cleaning Events")
+print("Starting Silver Layer: Enriching and Cleaning Events")
 
-# bronze_events_stream_df = spark.readStream.table(BRONZE_EVENTS_TABLE)
-# customers_df = spark.read.table(BRONZE_CUSTOMERS_TABLE)
-# products_df = spark.read.table(BRONZE_PRODUCTS_TABLE)
+bronze_events_stream_df = spark.readStream.table(BRONZE_EVENTS_TABLE)
+customers_df = spark.read.table(BRONZE_CUSTOMERS_TABLE)
+products_df = spark.read.table(BRONZE_PRODUCTS_TABLE)
 
-# deduplicated_stream_df = (
-#     bronze_events_stream_df
-#         .withWatermark("event_dt", "3 minutes")
-#         .dropDuplicates(["event_id"])
-# )
+deduplicated_stream_df = (
+    bronze_events_stream_df
+        .withWatermark("event_dt", "3 minutes")
+        .dropDuplicates(["event_id"])
+)
 
-# enriched_df = (
-#     deduplicated_stream_df
-#     .join(
-#         F.broadcast(products_df),
-#         deduplicated_stream_df.product_id == products_df.product_id,
-#         "inner"
-#     )
-#     .join(
-#         customers_df,
-#         deduplicated_stream_df.user_id == customers_df.customer_id,
-#         "left"
-#     )
-#     .withColumn("region", categorize_region(F.col("location")))
-#     .withColumnRenamed("event_type", "action")
-#     .withColumn("event_date", F.to_date(F.col("event_dt")))
-#     .select(
-#         "event_id", "event_dt", "event_date", "action",
-#         deduplicated_stream_df.user_id, "region",
-#         deduplicated_stream_df.product_id, "product_name", "category", "price"
-#     )
-# )
+enriched_df = (
+    deduplicated_stream_df
+    .join(
+        F.broadcast(products_df),
+        deduplicated_stream_df.product_id == products_df.product_id,
+        "inner"
+    )
+    .join(
+        customers_df,
+        deduplicated_stream_df.user_id == customers_df.customer_id,
+        "left"
+    )
+    .withColumn("region", categorize_region(F.col("location")))
+    .withColumnRenamed("event_type", "action")
+    .withColumn("event_date", F.to_date(F.col("event_dt")))
+    .select(
+        "event_id", "event_dt", "event_date", "action",
+        deduplicated_stream_df.user_id, "region",
+        deduplicated_stream_df.product_id, "product_name", "category", "price"
+    )
+)
 
-# (
-#     enriched_df.writeStream
-#     .format("delta")
-#     .outputMode("append")
-#     .option("checkpointLocation", f"{CHECKPOINT_BASE_PATH}/silver_activity")
-#     .trigger(availableNow=True)
-#     .toTable(SILVER_TABLE)
-# )
+(
+    enriched_df.writeStream
+    .format("delta")
+    .outputMode("append")
+    .option("checkpointLocation", f"{CHECKPOINT_BASE_PATH}/silver_activity")
+    .trigger(availableNow=True)
+    .toTable(SILVER_TABLE)
+)
 
-# print(f"Silver Layer: Enriched activity stream processing complete. Table `{SILVER_TABLE}` is updated.")
+print(f"Silver Layer: Enriched activity stream processing complete. Table `{SILVER_TABLE}` is updated.")
 
 # COMMAND ----------
 
@@ -482,45 +484,50 @@ generate_streaming_events(infinite=False, stream_events_per_batch=50000)
 
 # COMMAND ----------
 
-# print("Starting Gold Layer: Daily Product Performance Aggregation")
-# silver_df = spark.read.table(SILVER_TABLE)
+print("Starting Gold Layer: Daily Product Performance Aggregation")
+silver_df = spark.read.table(SILVER_TABLE)
 
-# SALTING_FACTOR = 5
-# salted_df = silver_df.withColumn("salt", (F.rand() * SALTING_FACTOR).cast("int"))
+SALTING_FACTOR = 5
+salted_df = silver_df.withColumn("salt", (F.rand() * SALTING_FACTOR).cast("int"))
 
-# salted_agg_df = (
-#     salted_df.groupBy("event_date", "product_id", "product_name", "category", "salt")
-#     .agg(
-#         F.count(F.when(F.col("action") == "view_product", 1)).alias("views"),
-#         F.count(F.when(F.col("action") == "add_to_cart", 1)).alias("adds_to_cart"),
-#         F.count(F.when(F.col("action") == "purchase", 1)).alias("purchases"),
-#         F.sum(F.when(F.col("action") == "purchase", F.col("price")).otherwise(0)).alias("daily_revenue")
-#     )
-# )
+salted_agg_df = (
+    salted_df.groupBy("event_date", "product_id", "product_name", "category", "salt")
+    .agg(
+        F.count(F.when(F.col("action") == "view_product", 1)).alias("views"),
+        F.count(F.when(F.col("action") == "add_to_cart", 1)).alias("adds_to_cart"),
+        F.count(F.when(F.col("action") == "purchase", 1)).alias("purchases"),
+        F.sum(F.when(F.col("action") == "purchase", F.col("price")).otherwise(0)).alias("daily_revenue")
+    )
+)
 
-# daily_product_performance_df = (
-#     salted_agg_df.groupBy("event_date", "product_id", "product_name", "category")
-#     .agg(
-#         F.sum("views").alias("total_views"),
-#         F.sum("adds_to_cart").alias("total_adds_to_cart"),
-#         F.sum("purchases").alias("total_purchases"),
-#         F.sum("daily_revenue").alias("total_revenue")
-#     )
-# )
+daily_product_performance_df = (
+    salted_agg_df.groupBy("event_date", "product_id", "product_name", "category")
+    .agg(
+        F.sum("views").alias("total_views"),
+        F.sum("adds_to_cart").alias("total_adds_to_cart"),
+        F.sum("purchases").alias("total_purchases"),
+        F.sum("daily_revenue").alias("total_revenue")
+    )
+)
 
-# window_spec = Window.partitionBy("event_date", "category").orderBy(F.col("total_revenue").desc())
-# final_product_gold_df = daily_product_performance_df.withColumn("revenue_rank", F.rank().over(window_spec))
+window_spec = Window.partitionBy("event_date", "category").orderBy(F.col("total_revenue").desc())
+final_product_gold_df = daily_product_performance_df.withColumn("revenue_rank", F.rank().over(window_spec))
 
-# (
-#     final_product_gold_df.write
-#     .format("delta")
-#     .mode("overwrite")
-#     .option("overwriteSchema", "true")
-#     .partitionBy("event_date")
-#     .saveAsTable(GOLD_DAILY_PRODUCT_TABLE)
-# )
+(
+    final_product_gold_df.write
+    .format("delta")
+    .mode("overwrite")
+    .option("overwriteSchema", "true")
+    .partitionBy("event_date")
+    .saveAsTable(GOLD_DAILY_PRODUCT_TABLE)
+)
 
-# print(f"Gold Layer: Wrote to `{GOLD_DAILY_PRODUCT_TABLE}` after handling skew.")
+print(f"Gold Layer: Wrote to `{GOLD_DAILY_PRODUCT_TABLE}` after handling skew.")
+
+# COMMAND ----------
+
+display(final_product_gold_df.count())
+display(spark.table(GOLD_DAILY_PRODUCT_TABLE).count())
 
 # COMMAND ----------
 
@@ -574,43 +581,43 @@ generate_streaming_events(infinite=False, stream_events_per_batch=50000)
 
 # COMMAND ----------
 
-# print("Starting Gold Layer: Customer Purchase Summary")
-# silver_df = spark.read.table(SILVER_TABLE)
+print("Starting Gold Layer: Customer Purchase Summary")
+silver_df = spark.read.table(SILVER_TABLE)
 
-# # --- Data Quality Check (Serverless-Compatible Method) ---
-# # # Accumulators are not available on serverless compute as they require direct sparkContext access.
-# # unknown_location_count = spark.sparkContext.accumulator(0)
-# # def count_unknown_locations(region):
-# #     if region is None:
-# #         global unknown_location_count
-# #         unknown_location_count += 1
-# #     return region
-# # count_unknown_udf = F.udf(count_unknown_locations, StringType())
-# # The best practice is to perform a direct count() action on a filtered DataFrame.
-# # This achieves the same goal of gathering a metric from the data.
-# unknown_location_count = silver_df.filter(F.col("region").isNull()).count()
+# --- Data Quality Check (Serverless-Compatible Method) ---
+# # Accumulators are not available on serverless compute as they require direct sparkContext access.
+# unknown_location_count = spark.sparkContext.accumulator(0)
+# def count_unknown_locations(region):
+#     if region is None:
+#         global unknown_location_count
+#         unknown_location_count += 1
+#     return region
+# count_unknown_udf = F.udf(count_unknown_locations, StringType())
+# The best practice is to perform a direct count() action on a filtered DataFrame.
+# This achieves the same goal of gathering a metric from the data.
+unknown_location_count = silver_df.filter(F.col("region").isNull()).count()
 
-# print(f"Data Quality Check: Found {unknown_location_count} events with unknown customer locations.")
+print(f"Data Quality Check: Found {unknown_location_count} events with unknown customer locations.")
 
-# customer_summary_df = (
-#     silver_df.filter(F.col("action") == 'purchase')
-#     .groupBy("user_id", "region")
-#     .agg(
-#         F.sum("price").alias("total_purchase_value"),
-#         F.count("event_id").alias("total_purchases"),
-#         F.approx_count_distinct("product_id").alias("distinct_products_purchased"),
-#         F.max("event_dt").alias("last_purchase_timestamp")
-#     )
-#     .orderBy(F.col("total_purchase_value").desc())
-# )
+customer_summary_df = (
+    silver_df.filter(F.col("action") == 'purchase')
+    .groupBy("user_id", "region")
+    .agg(
+        F.sum("price").alias("total_purchase_value"),
+        F.count("event_id").alias("total_purchases"),
+        F.approx_count_distinct("product_id").alias("distinct_products_purchased"),
+        F.max("event_dt").alias("last_purchase_timestamp")
+    )
+    .orderBy(F.col("total_purchase_value").desc())
+)
 
-# (
-#     customer_summary_df.write
-#     .format("delta")
-#     .mode("overwrite")
-#     .saveAsTable(GOLD_CUSTOMER_SUMMARY_TABLE)
-# )
-# print(f"Gold Layer: Wrote to `{GOLD_CUSTOMER_SUMMARY_TABLE}`.")
+(
+    customer_summary_df.write
+    .format("delta")
+    .mode("overwrite")
+    .saveAsTable(GOLD_CUSTOMER_SUMMARY_TABLE)
+)
+print(f"Gold Layer: Wrote to `{GOLD_CUSTOMER_SUMMARY_TABLE}`.")
 
 # COMMAND ----------
 

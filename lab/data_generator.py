@@ -218,12 +218,12 @@ def generate_streaming_events(infinite=None, stream_events_per_batch=None, strea
         write_event_batch()
 
 
-# --- Main Execution Block ---
-if __name__ == "__main__":
-    # First, generate the one-time batch files
-    generate_batch_data()
+# # --- Main Execution Block ---
+# if __name__ == "__main__":
+#     # First, generate the one-time batch files
+#     generate_batch_data()
     
-    # Then, start the continuous stream generation
-    # This will run indefinitely until the notebook cell is interrupted or cancelled,
-    # or just once if CONFIG["STREAM_INFINITE"] is set to False.
-    generate_streaming_events()
+#     # Then, start the continuous stream generation
+#     # This will run indefinitely until the notebook cell is interrupted or cancelled,
+#     # or just once if CONFIG["STREAM_INFINITE"] is set to False.
+#     generate_streaming_events()
