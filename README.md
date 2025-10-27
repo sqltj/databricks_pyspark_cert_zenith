@@ -78,6 +78,12 @@ This project provides practical, hands-on experience covering the majority of th
 
 - **Creating and Invoking Pandas UDFs:** You will define a Pandas UDF with the `@pandas_udf` decorator and apply it to a Spark DataFrame column, demonstrating a powerful way to leverage Python libraries within your Spark transformations.
 
-## How to start?
+## How to Start
 
-Read ProjectPlan.md
+All files for this lab are located in the `lab/` directory.
+
+1.  **Set Up Your Environment**: Open and run the `lab/environment_setup.ipynb` notebook in your Databricks workspace. This will create the necessary catalogs, schemas, and volumes for the project.
+
+2.  **Generate Synthetic Data**: Run the `lab/data_generator.py` script. This will populate your volumes with the raw data needed for the pipeline.
+
+3.  **Build the Pipeline**: Open the `lab/ELT.py` file. This file contains detailed instructions and the code for building the end-to-end ETL pipeline. Follow the steps in this file to complete the lab.
