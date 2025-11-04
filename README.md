@@ -1,5 +1,16 @@
 ### **Project Title: E-commerce User Behavior Analytics Pipeline**
 
+> Independent educational resource; not endorsed by Databricks, Inc. "Databricks" and "Delta Lake" are trademarks of their respective owners.
+
+### Connect with me:
+
+- 🔗 [LinkedIn](https://www.linkedin.com/in/jrlasak/) - Databricks projects and tips
+- 📬 [Substack Newsletter](https://dataengineer.wiki/substack) - Exclusive content for Data Engineers
+- 🌐 [DataEngineer.wiki](http://dataengineer.wiki/) - Training materials and resources
+- 🚀 [More Practice Labs](https://dataengineer.wiki/projects) - Delta Live Tables, table optimization, and more
+
+### Project Overview
+
 This project is a comprehensive, hands-on lab designed to prepare you for the **[Databricks Certified Associate Developer for Apache Spark](https://www.databricks.com/learn/certification/apache-spark-developer-associate)** certification exam. Instead of studying abstract concepts, you will build a realistic, end-to-end data pipeline that solves a real-world business problem, applying dozens of the specific skills tested on the exam.
 
 ---
