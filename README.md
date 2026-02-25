@@ -2,7 +2,11 @@
 
 > Independent educational resource; not endorsed by Databricks, Inc. "Databricks" and "Delta Lake" are trademarks of their respective owners.
 
-### Connect with me:
+### Author
+
+<img src="https://dataengineer.wiki/download/profilepicture.jpg" alt="Jakub Lasak" width="80" style="border-radius: 50%;" />
+
+**Jakub Lasak** — Helping you interview like seniors, execute like seniors, and think like seniors.
 
 - 🔗 [LinkedIn](https://www.linkedin.com/in/jrlasak/) - Databricks projects and tips
 - 📬 [Substack Newsletter](https://dataengineer.wiki/substack) - Exclusive content for Data Engineers
@@ -91,10 +95,18 @@ This project provides practical, hands-on experience covering the majority of th
 
 ## How to Start
 
-All files for this lab are located in the `lab/` directory.
+1. **Create a Databricks Account**
+   - Sign up for a [Databricks Free Edition account](https://www.databricks.com/learn/free-edition) if you don't already have one.
+   - Familiarize yourself with the workspace, clusters, and notebook interface.
 
-1.  **Set Up Your Environment**: Open and run the `lab/environment_setup.ipynb` notebook in your Databricks workspace. This will create the necessary catalogs, schemas, and volumes for the project.
+2. **Import this repository to Databricks**
+   - In Databricks, go to the Workspace sidebar and click the "Repos" section, click "Add Repo".
+     - Alternatively, go to your personal folder, click "create" and select "git folder".
+   - Paste the GitHub URL for this repository.
+   - Authenticate with GitHub if prompted, and select the main branch.
+   - The repo will appear as a folder in your workspace, allowing you to edit, run notebooks, and manage files directly from Databricks.
+   - For more details, see the official Databricks documentation: [Repos in Databricks](https://docs.databricks.com/repos/index.html).
 
-2.  **Generate Synthetic Data**: Run the `lab/data_generator.py` script. This will populate your volumes with the raw data needed for the pipeline.
-
-3.  **Build the Pipeline**: Open the `lab/ELT.py` file. This file contains detailed instructions and the code for building the end-to-end ETL pipeline. Follow the steps in this file to complete the lab.
+3. Open the `lab/` folder and run `environment_setup.ipynb` to create the necessary catalogs, schemas, and volumes.
+4. Run `data_generator.py` to populate your volumes with the raw data.
+5. Open `ELT.py` and follow the step-by-step instructions to build the end-to-end ETL pipeline.
